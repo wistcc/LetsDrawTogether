@@ -1,0 +1,186 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@section scripts{
+    <script src="~/Scripts/jquery-1.10.2.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.0.0.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script type="text/javascript">
+
+        var fromServer = false;
+
+        var canvas, ctx, flag = false,
+            prevX = 0,
+            currX = 0,
+            prevY = 0,
+            currY = 0,
+            dot_flag = false;
+
+        var x = "black",
+            y = 2;
+
+        canvas = document.getElementById('can');
+        ctx = canvas.getContext("2d");
+        w = canvas.width;
+        h = canvas.height;
+
+        $(function () {
+            //SignalR
+            var hub = $.connection.hubController;
+
+            // Create a function that the hub can call to broadcast messages.
+            hub.client.drawTogether = function (res, clientX, clientY) {
+                fromServer = true;
+                findxy(res, clientX, clientY);
+            };
+
+            // Start the connection.
+            $.connection.hub.start().done(function () {
+                hub.server.joinGroup("");
+
+                canvas.addEventListener("mousemove", function (e) {
+                    var res = 'move';
+                    if (!fromServer) {
+                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    } else {
+                        fromServer = false;
+                    }
+                    findxy(res, e.clientX, e.clientY);
+                }, false);
+                canvas.addEventListener("mousedown", function (e) {
+                    var res = 'down';
+                    if (!fromServer) {
+                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    } else {
+                        fromServer = false;
+                    }
+                    findxy(res, e.clientX, e.clientY);
+                }, false);
+                canvas.addEventListener("mouseup", function (e) {
+                    var res = 'up';
+                    if (!fromServer) {
+                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    } else {
+                        fromServer = false;
+                    }
+                    findxy(res, e.clientX, e.clientY);
+                }, false);
+                canvas.addEventListener("mouseout", function (e) {
+                    var res = 'out';
+                    if (!fromServer) {
+                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    } else {
+                        fromServer = false;
+                    }
+                    findxy(res, e.clientX, e.clientY);
+                }, false);
+            });
+
+
+            $(".colors").click(function color() {
+                var obj = $(this);
+                switch (obj.attr("id")) {
+                    case "green":
+                        x = "green";
+                        break;
+                    case "blue":
+                        x = "blue";
+                        break;
+                    case "red":
+                        x = "red";
+                        break;
+                    case "yellow":
+                        x = "yellow";
+                        break;
+                    case "orange":
+                        x = "orange";
+                        break;
+                    case "black":
+                        x = "black";
+                        break;
+                    case "white":
+                        x = "white";
+                        break;
+                }
+                if (x == "white") y = 14;
+                else y = 2;
+
+            });
+
+            function draw() {
+                ctx.beginPath();
+                ctx.moveTo(prevX, prevY);
+                ctx.lineTo(currX, currY);
+                ctx.strokeStyle = x;
+                ctx.lineWidth = y;
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            $("#clr").click(function erase() {
+                var m = confirm("Want to clear");
+                if (m) {
+                    ctx.clearRect(0, 0, w, h);
+                    document.getElementById("canvasimg").style.display = "none";
+                }
+            });
+
+            $("#btn").click(function save() {
+                document.getElementById("canvasimg").style.border = "2px solid";
+                var dataURL = canvas.toDataURL();
+                document.getElementById("canvasimg").src = dataURL;
+                document.getElementById("canvasimg").style.display = "inline";
+            });
+
+            function findxy(res, clientX, clientY) {
+                if (res == 'down') {
+                    prevX = currX;
+                    prevY = currY;
+                    currX = clientX - canvas.offsetLeft;
+                    currY = clientY - canvas.offsetTop;
+
+                    flag = true;
+                    dot_flag = true;
+                    if (dot_flag) {
+                        ctx.beginPath();
+                        ctx.fillStyle = x;
+                        ctx.fillRect(currX, currY, 2, 2);
+                        ctx.closePath();
+                        dot_flag = false;
+                    }
+                }
+                if (res == 'up' || res == "out") {
+                    flag = false;
+                }
+                if (res == 'move') {
+                    if (flag) {
+                        prevX = currX;
+                        prevY = currY;
+                        currX = clientX - canvas.offsetLeft;
+                        currY = clientY - canvas.offsetTop;
+                        draw();
+                    }
+                }
+            }
+        });
+    </script>
+}
+
+<canvas id="can" width="400" height="400" style="position:absolute;top:10%;left:10%;border:2px solid;"></canvas>
+<div style="padding-top: 500px;">
+    <div style="position:absolute;top:12%;left:43%;">Choose Color</div>
+    <div style="position:absolute;top:15%;left:45%;width:10px;height:10px;background:green;" id="green" class="colors"></div>
+    <div style="position:absolute;top:15%;left:46%;width:10px;height:10px;background:blue;" id="blue" class="colors"></div>
+    <div style="position:absolute;top:15%;left:47%;width:10px;height:10px;background:red;" id="red" class="colors"></div>
+    <div style="position:absolute;top:17%;left:45%;width:10px;height:10px;background:yellow;" id="yellow" class="colors"></div>
+    <div style="position:absolute;top:17%;left:46%;width:10px;height:10px;background:orange;" id="orange" class="colors"></div>
+    <div style="position:absolute;top:17%;left:47%;width:10px;height:10px;background:black;" id="black" class="colors"></div>
+    <div style="position:absolute;top:20%;left:43%;">Eraser</div>
+    <div style="position:absolute;top:23%;left:45%;width:15px;height:15px;background:white;border:2px solid;" id="white" class="colors"></div>
+    <img id="canvasimg" style="position:absolute;top:10%;left:52%;" style="display:none;">
+    <input type="button" value="save" id="btn" size="30" style="position:absolute;top:26%;left:43%;">
+    <input type="button" value="clear" id="clr" size="23" style="position:absolute;top:26%;left:48%;">
+</div>
+
+<!--Let's draw together-->
