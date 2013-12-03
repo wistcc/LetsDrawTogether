@@ -31,8 +31,16 @@
 
             // Create a function that the hub can call to broadcast messages.
             hub.client.drawTogether = function (res, clientX, clientY) {
-                fromServer = true;
                 findxy(res, clientX, clientY);
+            };
+            hub.client.changeColor = function (color) {
+                x = color;
+                if (x == "white") y = 14;
+                else y = 2;
+            };
+            hub.client.clearOrSave = function (btnId) {
+                fromServer = true;
+                $("#"+btnId).trigger("click");
             };
 
             // Start the connection.
@@ -41,46 +49,29 @@
 
                 canvas.addEventListener("mousemove", function (e) {
                     var res = 'move';
-                    if (!fromServer) {
-                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
-                    } else {
-                        fromServer = false;
-                    }
+                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mousedown", function (e) {
                     var res = 'down';
-                    if (!fromServer) {
-                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
-                    } else {
-                        fromServer = false;
-                    }
+                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mouseup", function (e) {
                     var res = 'up';
-                    if (!fromServer) {
-                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
-                    } else {
-                        fromServer = false;
-                    }
+                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mouseout", function (e) {
                     var res = 'out';
-                    if (!fromServer) {
-                        hub.server.drawTogether(res, e.clientX, e.clientY, "");
-                    } else {
-                        fromServer = false;
-                    }
+                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
                     findxy(res, e.clientX, e.clientY);
                 }, false);
-            });
 
-
-            $(".colors").click(function color() {
-                var obj = $(this);
-                switch (obj.attr("id")) {
+                $(".colors").click(function color() {
+                    var obj = $(this);
+                    hub.server.changeColor(obj.attr("id"), "");
+                    switch (obj.attr("id")) {
                     case "green":
                         x = "green";
                         break;
@@ -102,10 +93,36 @@
                     case "white":
                         x = "white";
                         break;
-                }
-                if (x == "white") y = 14;
-                else y = 2;
+                    }
+                    if (x == "white") y = 14;
+                    else y = 2;
+                });
 
+                $("#clr").click(function erase() {
+                    if (confirm("Want to clear")) {
+                        if (!fromServer) {
+                            hub.server.clearOrSave($(this).attr("id"), "");
+                        } else {
+                            fromServer = false;
+                        }
+                        
+                        ctx.clearRect(0, 0, w, h);
+                        document.getElementById("canvasimg").style.display = "none";
+                    }
+                });
+
+                $("#btn").click(function save() {
+                    if (!fromServer) {
+                        hub.server.clearOrSave($(this).attr("id"), "");
+                    } else {
+                        fromServer = false;
+                    }
+                    
+                    document.getElementById("canvasimg").style.border = "2px solid";
+                    var dataURL = canvas.toDataURL();
+                    document.getElementById("canvasimg").src = dataURL;
+                    document.getElementById("canvasimg").style.display = "inline";
+                });
             });
 
             function draw() {
@@ -117,21 +134,6 @@
                 ctx.stroke();
                 ctx.closePath();
             }
-
-            $("#clr").click(function erase() {
-                var m = confirm("Want to clear");
-                if (m) {
-                    ctx.clearRect(0, 0, w, h);
-                    document.getElementById("canvasimg").style.display = "none";
-                }
-            });
-
-            $("#btn").click(function save() {
-                document.getElementById("canvasimg").style.border = "2px solid";
-                var dataURL = canvas.toDataURL();
-                document.getElementById("canvasimg").src = dataURL;
-                document.getElementById("canvasimg").style.display = "inline";
-            });
 
             function findxy(res, clientX, clientY) {
                 if (res == 'down') {

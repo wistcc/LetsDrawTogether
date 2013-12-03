@@ -14,5 +14,13 @@ namespace LetsDrawTogether
         {
             Clients.OthersInGroup("Group" + groupId).drawTogether(res,clientX, clientY);
         }
+        public void ChangeColor(string color, string groupId = "1")
+        {
+            Clients.OthersInGroup("Group" + groupId).changeColor(color);
+        }
+        public void ClearOrSave(string btnId, string groupId = "1")
+        {
+            Clients.OthersInGroup("Group" + groupId).clearOrSave(btnId);
+        }
     }
 }
