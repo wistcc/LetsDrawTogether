@@ -56,3 +56,4 @@ C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.Twitter.xml
 C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.MicrosoftAccount.xml
 C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.dll
 C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.pdb
+C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.csprojResolveAssemblyReference.cache

@@ -1,13 +1,20 @@
-﻿@{
-    ViewBag.Title = "Home Page";
-}
-@section scripts{
+﻿@section scripts{
     <script src="~/Scripts/jquery-1.10.2.js"></script>
     <script src="~/Scripts/jquery.signalR-2.0.0.js"></script>
+    <script src="~/Scripts/LetsDrawTogether.js"></script>
+    @* ReSharper disable once Html.PathError *@
     <script src="~/signalr/hubs"></script>
 
     <script type="text/javascript">
-
+        if (typeof (localStorage) == 'undefined') {
+            alert('Your browser does not support HTML5 localStorage. Try upgrading.');
+        } else {
+            try {
+                localStorage.setItem('DrawGuId', guid()); //saves to the database, “key”, “value”
+            } catch (e) {
+                alert(e); //data wasn’t successfully saved due to quota exceed so throw an error
+            }
+        }
         var fromServer = false;
 
         var canvas, ctx, flag = false,
@@ -42,35 +49,45 @@
                 fromServer = true;
                 $("#" + btnId).trigger("click");
             };
+            hub.client.newGroup = function (groupId) {
+                $("#groupId").html("Draw Id number: " + groupId);
+                $("#drawIdToSend").val("");
+            };
 
             // Start the connection.
             $.connection.hub.start().done(function () {
-                hub.server.joinGroup("");
+                hub.server.joinGroup(localStorage["DrawGuId"]);
+                $("#groupId").html("Draw Id number: " + localStorage["DrawGuId"]);
+
+                $("#sendDrawId").click(function() {
+                    hub.server.joinToSpecificGroup($("#drawIdToSend").val(), localStorage["DrawGuId"]);
+                    localStorage.setItem('DrawGuId', $("#drawIdToSend").val());
+                });
 
                 canvas.addEventListener("mousemove", function (e) {
                     var res = 'move';
-                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["DrawGuId"]);
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mousedown", function (e) {
                     var res = 'down';
-                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["DrawGuId"]);
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mouseup", function (e) {
                     var res = 'up';
-                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["DrawGuId"]);
                     findxy(res, e.clientX, e.clientY);
                 }, false);
                 canvas.addEventListener("mouseout", function (e) {
                     var res = 'out';
-                    hub.server.drawTogether(res, e.clientX, e.clientY, "");
+                    hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["DrawGuId"]);
                     findxy(res, e.clientX, e.clientY);
                 }, false);
 
                 $(".colors").click(function color() {
                     var obj = $(this);
-                    hub.server.changeColor(obj.attr("id"), "");
+                    hub.server.changeColor(obj.attr("id"), localStorage["DrawGuId"]);
                     switch (obj.attr("id")) {
                         case "green":
                             x = "green";
@@ -101,7 +118,7 @@
                 $("#clr").click(function erase() {
                     if (confirm("Want to clear")) {
                         if (!fromServer) {
-                            hub.server.clearOrSave($(this).attr("id"), "");
+                            hub.server.clearOrSave($(this).attr("id"), localStorage["DrawGuId"]);
                         } else {
                             fromServer = false;
                         }
@@ -113,14 +130,14 @@
 
                 $("#btn").click(function save() {
                     if (!fromServer) {
-                        hub.server.clearOrSave($(this).attr("id"), "");
+                        hub.server.clearOrSave($(this).attr("id"), localStorage["DrawGuId"]);
                     } else {
                         fromServer = false;
                     }
 
                     document.getElementById("canvasimg").style.border = "2px solid";
-                    var dataURL = canvas.toDataURL();
-                    document.getElementById("canvasimg").src = dataURL;
+                    var dataUrl = canvas.toDataURL();
+                    document.getElementById("canvasimg").src = dataUrl;
                     document.getElementById("canvasimg").style.display = "inline";
                 });
             });
@@ -184,5 +201,9 @@
     <input type="button" value="save" id="btn" size="30" style="position:absolute;top:26%;left:43%;">
     <input type="button" value="clear" id="clr" size="23" style="position:absolute;top:26%;left:48%;">
 </div>
+
+<h5 id="groupId"></h5>
+<input type="text" id="drawIdToSend" placeholder="Enter a draw Id"/>
+<button id="sendDrawId">Join to Draw group</button>
 
 <!--Let's draw together-->
