@@ -54,6 +54,5 @@ C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.OAuth.xml
 C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.Google.xml
 C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.Twitter.xml
 C:\Dev\LetsDrawTogether\LetsDrawTogether\bin\Microsoft.Owin.Security.MicrosoftAccount.xml
-C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.csprojResolveAssemblyReference.cache
 C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.dll
 C:\Dev\LetsDrawTogether\LetsDrawTogether\obj\Debug\LetsDrawTogether.pdb

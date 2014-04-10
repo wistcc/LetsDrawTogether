@@ -12,7 +12,7 @@ namespace LetsDrawTogether
 
         public void DrawTogether(string res, int clientX, int clientY, string groupId = "1")
         {
-            Clients.OthersInGroup("Group" + groupId).drawTogether(res,clientX, clientY);
+            Clients.OthersInGroup("Group" + groupId).drawTogether(res, clientX, clientY);
         }
         public void ChangeColor(string color, string groupId = "1")
         {
