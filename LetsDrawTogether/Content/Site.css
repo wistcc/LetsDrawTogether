@@ -42,5 +42,9 @@ input[type="checkbox"].input-validation-error {
 }
 
 .colors {
-    
+    line-height: 1em;
+    display: inline-block;
+    text-decoration: none;
+    width:10px;
+    height:10px;
 }

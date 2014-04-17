@@ -24,9 +24,13 @@ namespace LetsDrawTogether
         {
             Clients.OthersInGroup("Group" + groupId).changeColor(color);
         }
-        public void ClearOrSave(string btnId, string groupId)
+        public void AddImage(string imgUrl, string groupId)
         {
-            Clients.OthersInGroup("Group" + groupId).clearOrSave(btnId);
+            Clients.OthersInGroup("Group" + groupId).addImage(imgUrl);
+        }
+        public void Clear(string btnId, string groupId)
+        {
+            Clients.OthersInGroup("Group" + groupId).clear(btnId);
         }
     }
 }
