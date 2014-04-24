@@ -38,18 +38,23 @@ $(function () {
     var hub = $.connection.hubController;
 
     // Create a function that the hub can call to broadcast messages.
-    hub.client.drawTogether = function (res, clientX, clientY, fromLeft, fromTop, fromBottom, fromRight) {
-        findxy(res, convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
-    };
-    hub.client.callhandleMouseDown = function (clientX, clientY, fromLeft, fromTop, fromBottom, fromRight, resizer) {
-        handleMouseDown(convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
-        updateDragginResizerFromServer(resizer);
-    };
-    hub.client.callhandleMouseMove = function (clientX, clientY, fromLeft, fromTop, fromBottom, fromRight) {
-        handleMouseMove(convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
-    };
-    hub.client.callhandleMouseOut = function () {
-        handleMouseOut();
+    hub.client.drawTogether = function (res, clientX, clientY, fromLeft, fromTop, fromBottom, fromRight, mouseOrTouchType, resizer, canDraw) {
+        switch (mouseOrTouchType) {
+            case MouseOrTouchType.Move:
+                handleMouseMove(convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
+                break;
+            case MouseOrTouchType.Out:
+                handleMouseOut();
+                break;
+            case MouseOrTouchType.Down:
+                handleMouseDown(convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
+                updateDragginResizerFromServer(resizer);
+                break;
+        }
+
+        if (canDraw) {
+            findxy(res, convertPosition(clientX, fromLeft, fromTop, fromBottom, fromRight, true), convertPosition(clientY, fromLeft, fromTop, fromBottom, fromRight, false));
+        }
     };
     hub.client.changeColor = function (color) {
         x = color;
@@ -63,7 +68,7 @@ $(function () {
     hub.client.clear = function (btnId) {
         fromServer = true;
         if (confirm("Want to clear?")) {
-            $("#can").data("jqScribble").clear();
+            clearAll();
         }
     };
     hub.client.newGroup = function (groupId) {
@@ -84,57 +89,52 @@ $(function () {
             var touchEvent = e.changedTouches[0];
             if (!handleMouseDown(touchEvent.pageX, touchEvent.pageY)) {
                 var res = 'down';
-                hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
+                hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], 0, 0, true);
                 findxy(res, touchEvent.pageX, touchEvent.pageY);
             } else {
-                hub.server.callhandleMouseDown(touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], getDragginResizer());
+                hub.server.drawTogether('', touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Down, getDragginResizer(), false);
             }
         }, false);
         canvas.addEventListener("touchend", function (e) {
-            handleMouseOut();
             var res = 'out';
             var touchEvent = e.changedTouches[0];
-            hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
+            hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Out, 0, true);
+            handleMouseOut();
             findxy(res, touchEvent.pageX, touchEvent.pageY);
-            hub.server.callhandleMouseOut(localStorage["DrawGuId"]);
         }, false);
         canvas.addEventListener("touchmove", function (e) {
             var res = 'move';
             var touchEvent = e.changedTouches[0];
+            hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Move, 0, true);
             handleMouseMove(touchEvent.pageX, touchEvent.pageY);
-            hub.server.drawTogether(res, touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
             findxy(res, touchEvent.pageX, touchEvent.pageY);
-            hub.server.callhandleMouseMove(touchEvent.pageX, touchEvent.pageY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
         }, false);
         canvas.addEventListener("mousemove", function (e) {
             var res = 'move';
+            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Move, 0, true);
             handleMouseMove(e.clientX, e.clientY);
-            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
             findxy(res, e.clientX, e.clientY);
-            hub.server.callhandleMouseMove(e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
         }, false);
         canvas.addEventListener("mousedown", function (e) {
             if (!handleMouseDown(e.clientX, e.clientY)) {
                 var res = 'down';
-                hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasTop"], localStorage["CanvasLeft"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
+                hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], 0, 0, true);
                 findxy(res, e.clientX, e.clientY);
             } else {
-                hub.server.callhandleMouseDown(e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], getDragginResizer());
+                hub.server.drawTogether('', e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Down, getDragginResizer(), false);
             }
         }, false);
         canvas.addEventListener("mouseup", function (e) {
-            handleMouseUp(e);
             var res = 'up';
-            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasTop"], localStorage["CanvasLeft"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
+            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Out, 0, true);
+            handleMouseUp(e);
             findxy(res, e.clientX, e.clientY);
-            hub.server.callhandleMouseOut(localStorage["DrawGuId"]);
         }, false);
         canvas.addEventListener("mouseout", function (e) {
-            handleMouseOut();
             var res = 'out';
-            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasTop"], localStorage["CanvasLeft"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"]);
+            hub.server.drawTogether(res, e.clientX, e.clientY, localStorage["CanvasLeft"], localStorage["CanvasTop"], localStorage["CanvasBottom"], localStorage["CanvasRight"], localStorage["DrawGuId"], MouseOrTouchType.Out, 0, true);
+            handleMouseOut();
             findxy(res, e.clientX, e.clientY);
-            hub.server.callhandleMouseOut(localStorage["DrawGuId"]);
         }, false);
 
         $("#sendImgUrl").click(function () {
@@ -178,8 +178,8 @@ $(function () {
         $("#clr").click(function erase() {
             if (confirm("Want to clear?")) {
                 if (!fromServer) {
-                    $("#can").data("jqScribble").clear();
                     hub.server.clear($(this).attr("id"), localStorage["DrawGuId"]);
+                    clearAll();
                 } else {
                     fromServer = false;
                 }
@@ -213,9 +213,11 @@ $(function () {
                 ctx.closePath();
                 dot_flag = false;
             }
+            res = '';
         }
         if (res == 'up' || res == "out") {
             flag = false;
+            res = '';
         }
         if (res == 'move') {
             if (flag) {
@@ -225,6 +227,7 @@ $(function () {
                 currY = clientY - canvas.offsetTop;
                 draw();
             }
+            res = '';
         }
     }
 });
@@ -234,7 +237,6 @@ function addImage() {
     if (imgUrl !== '') {
         $("#sendImgUrl").val(imgUrl);
         $("#sendImgUrl").trigger("click");
-        //$("#can").data("jqScribble").update({ backgroundImage: img });
         createImg(imgUrl);
     }
 }
@@ -281,4 +283,23 @@ function convertPosition(move, fromLeft, fromTop, fromBottom, fromRight, isX) {
         return move / diff6;
     }
     return move * diff6;
+}
+
+function clearAll() {
+    img = new Image();
+    $("#can").data("jqScribble").clear();
+
+    w = canvas.width;
+    h = canvas.height;
+    fromServer = false;
+
+    flag = false;
+    prevX = 0;
+    currX = 0;
+    prevY = 0;
+    currY = 0;
+    dot_flag = false;
+
+    x = "black";
+    y = 2;
 }
